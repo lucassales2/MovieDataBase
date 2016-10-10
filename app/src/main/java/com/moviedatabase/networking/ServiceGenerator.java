@@ -1,9 +1,6 @@
 package com.moviedatabase.networking;
 
-import android.support.annotation.NonNull;
-
 import java.io.IOException;
-import java.util.Locale;
 
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -22,6 +19,8 @@ public class ServiceGenerator {
 
     public static final String API_BASE_URL = "http://api.themoviedb.org/3/";
 
+    private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
+
     private static Retrofit.Builder builder =
             new Retrofit.Builder()
                     .baseUrl(API_BASE_URL)
@@ -33,30 +32,15 @@ public class ServiceGenerator {
     }
 
     public static <S> S createService(Class<S> serviceClass, final String authToken) {
-        return createService(serviceClass, authToken, true);
-    }
-
-    public static <S> S createService(Class<S> serviceClass, String authToken, boolean withLocale) {
-        OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
         if (authToken != null) {
-            httpClient.addInterceptor(getInterceptor(authToken, withLocale));
-        }
-        OkHttpClient client = httpClient.build();
-        Retrofit retrofit = builder.client(client).build();
-        return retrofit.create(serviceClass);
-    }
-
-    @NonNull
-    private static Interceptor getInterceptor(final String authToken, boolean withLocale) {
-        if (withLocale) {
-            return new Interceptor() {
+            httpClient.addInterceptor(new Interceptor() {
                 @Override
-                public Response intercept(Chain chain) throws IOException {
+                public Response intercept(Interceptor.Chain chain) throws IOException {
                     Request original = chain.request();
                     HttpUrl originalHttpUrl = original.url();
+
                     HttpUrl url = originalHttpUrl.newBuilder()
                             .addQueryParameter("api_key", authToken)
-                            .addQueryParameter("language", String.format("%s-%s", Locale.getDefault().getLanguage(), Locale.getDefault().getCountry()))
                             .build();
 
                     // Request customization: add request headers
@@ -66,27 +50,11 @@ public class ServiceGenerator {
                     Request request = requestBuilder.build();
                     return chain.proceed(request);
                 }
-            };
-        } else {
-            return new Interceptor() {
-                @Override
-                public Response intercept(Chain chain) throws IOException {
-                    Request original = chain.request();
-                    HttpUrl originalHttpUrl = original.url();
-                    HttpUrl url = originalHttpUrl.newBuilder()
-                            .addQueryParameter("api_key", authToken)
-                            .build();
-
-                    Request.Builder requestBuilder = original.newBuilder()
-                            .url(url);
-
-                    Request request = requestBuilder.build();
-                    return chain.proceed(request);
-                }
-            };
+            });
         }
 
+        OkHttpClient client = httpClient.build();
+        Retrofit retrofit = builder.client(client).build();
+        return retrofit.create(serviceClass);
     }
-
-
 }

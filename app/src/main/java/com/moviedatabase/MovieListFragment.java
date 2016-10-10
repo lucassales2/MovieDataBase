@@ -1,14 +1,10 @@
 package com.moviedatabase;
 
-import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -18,84 +14,105 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.moviedatabase.adapters.MoviesCursorAdapter;
-import com.moviedatabase.adapters.MoviesCursorAdapterListener;
-import com.moviedatabase.data.MovieContract;
-import com.moviedatabase.sync.MovieSyncAdapter;
+import com.moviedatabase.adapters.MoviesAdapter;
+import com.moviedatabase.adapters.MoviesAdapterListener;
+import com.moviedatabase.networking.movies.MovieApiService;
+import com.moviedatabase.networking.movies.dto.MovieDto;
+import com.moviedatabase.networking.movies.dto.MoviesResponse;
+
+import java.util.ArrayList;
 
 import javax.inject.Inject;
+
+import rx.Observable;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by lucas on 07/10/16.
  */
 
-public class MovieListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, MoviesCursorAdapterListener, SharedPreferences.OnSharedPreferenceChangeListener {
+public class MovieListFragment extends Fragment implements MoviesAdapterListener {
     public final static String TAG = MovieListFragment.class.getSimpleName();
-    public static final int COL_ID = 0;
-    public static final int COL_POSTER_PATH = 1;
-
-    private final String SORT_ORDER = "sortOrder";
-    private final String SELECTION = "selection";
-    private final String SELECTION_ARGS = "selectionArgs";
-    private final String LAST_SELECTED = "lastSelected";
+    private final String MOVIES = "movies";
+    private final String MOVIE_OPTION = "movieOption";
+    @Inject
+    MovieApiService movieApiService;
     @Inject
     SharedPreferences sharedPreferences;
-    private int lastSelected = 0;
-    private MoviesCursorAdapter cursorAdapter;
-    private Callback callback;
-    private int LOADER_ID = 0;
-    private boolean twoPane;
+    private MoviesAdapter adapter;
+    private RecyclerView recyclerView;
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        callback = (Callback) context;
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(MOVIES, adapter.getMovies());
+        super.onSaveInstanceState(outState);
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         MovieApplication.getInstance().getComponent().inject(this);
-        if (savedInstanceState == null) {
-            MovieSyncAdapter.syncImmediately(getContext());
-        } else {
-            lastSelected = savedInstanceState.getInt(LAST_SELECTED, 0);
-        }
-        getLoaderManager().initLoader(LOADER_ID, createLoaderArguments(), this);
-        setRetainInstance(true);
         setHasOptionsMenu(true);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        getLoaderManager().initLoader(LOADER_ID, createLoaderArguments(), this);
-        RecyclerView recyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_main, container, false);
+        recyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_main, container, false);
         recyclerView.setHasFixedSize(true);
-        String title = sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated));
-        getActivity().setTitle(title);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), getResources().getInteger(R.integer.span_count)));
-        cursorAdapter = new MoviesCursorAdapter(null, this);
-        recyclerView.setAdapter(cursorAdapter);
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        String title = sharedPreferences.getString(MOVIE_OPTION, getString(R.string.top_rated));
+        if (savedInstanceState == null) {
+            fetchMovies(title);
+            adapter = new MoviesAdapter(this);
+        } else {
+            getActivity().setTitle(title);
+            ArrayList<MovieDto> movies = savedInstanceState.getParcelableArrayList(MOVIES);
+            adapter = new MoviesAdapter(movies, this);
+        }
+        recyclerView.setAdapter(adapter);
         return recyclerView;
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putInt(LAST_SELECTED, lastSelected);
-        super.onSaveInstanceState(outState);
-    }
+    private void fetchMovies(String string) {
+        Observable<MoviesResponse> moviesResponseObservable;
+        getActivity().setTitle(string);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        edit.putString(MOVIE_OPTION, string).apply();
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-    }
+        if (string.equals(getString(R.string.popular))) {
+            moviesResponseObservable = movieApiService.getPopularMovies();
+        } else if (string.equals(getString(R.string.upcoming))) {
+            moviesResponseObservable = movieApiService.getUpcomingMovies();
+        } else if (string.equals(getString(R.string.now_playing))) {
+            moviesResponseObservable = movieApiService.getNowPlayingMovies();
+        } else {
+            moviesResponseObservable = movieApiService.getTopRatedMovies();
+        }
+        if (adapter != null) {
+            adapter.clear();
+        }
+        moviesResponseObservable
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<MoviesResponse>() {
+                    @Override
+                    public void onCompleted() {
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(MoviesResponse moviesResponse) {
+                        adapter.addAll(moviesResponse.results);
+                    }
+                });
     }
 
     @Override
@@ -106,100 +123,27 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        SharedPreferences.Editor edit = sharedPreferences.edit();
         switch (item.getItemId()) {
             case R.id.action_popular:
-                edit.putString(getString(R.string.movie_option), getString(R.string.popular)).apply();
+                fetchMovies(getString(R.string.popular));
                 break;
             case R.id.action_now_playing:
-                edit.putString(getString(R.string.movie_option), getString(R.string.now_playing)).apply();
+                fetchMovies(getString(R.string.now_playing));
                 break;
             case R.id.action_upcoming:
-                edit.putString(getString(R.string.movie_option), getString(R.string.upcoming)).apply();
+                fetchMovies(getString(R.string.upcoming));
                 break;
             case R.id.action_top_rated:
-                edit.putString(getString(R.string.movie_option), getString(R.string.top_rated)).apply();
-                break;
-            case R.id.action_favorites:
-                edit.putString(getString(R.string.movie_option), getString(R.string.favorites)).apply();
+                fetchMovies(getString(R.string.top_rated));
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public void setTwoPane(boolean twoPane) {
-        this.twoPane = twoPane;
-    }
-
     @Override
-    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(
-                getActivity(),
-                MovieContract.MovieEntry.CONTENT_URI,
-                new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_POSTER_PATH},
-                args.getString(SELECTION, null),
-                args.getStringArray(SELECTION_ARGS),
-                args.getString(SORT_ORDER));
-    }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-        cursorAdapter.swapCursor(cursor);
-        if (twoPane) {
-            if (cursor.moveToPosition(lastSelected)) {
-                callback.onItemSelected(cursor.getLong(0));
-            }
-            loader.stopLoading();
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        cursorAdapter.swapCursor(null);
-    }
-
-    @Override
-    public void onItemClick(long id, int position) {
-        lastSelected = position;
-        callback.onItemSelected(id);
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals(getString(R.string.movie_option))) {
-            MovieSyncAdapter.syncImmediately(getContext());
-            getActivity().setTitle(sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated)));
-            getLoaderManager().restartLoader(LOADER_ID, createLoaderArguments(), this);
-        }
-    }
-
-    private Bundle createLoaderArguments() {
-        String movieOption = sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated));
-        Bundle bundle = new Bundle();
-        if (movieOption.equals(getString(R.string.top_rated))) {
-            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RATING + " DESC");
-            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + "<= ?");
-            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis() - 7889238000L)});
-        } else if (movieOption.equals(getString(R.string.popular))) {
-            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC");
-            bundle.putString(SELECTION, null);
-            bundle.putStringArrayList(SELECTION_ARGS, null);
-        } else if (movieOption.equals(getString(R.string.now_playing))) {
-            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + " DESC");
-            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + "<= ?");
-            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis())});
-        } else if (movieOption.equals(getString(R.string.favorites))) {
-            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_FAVORITED + "= ?");
-            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(1)});
-        } else {
-            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + " ASC");
-            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + ">= ?");
-            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis())});
-        }
-        return bundle;
-    }
-
-    public interface Callback {
-        void onItemSelected(long movieId);
+    public void onItemClick(MovieDto movieDto) {
+        Intent intent = new Intent(getContext(), MovieDetail.class);
+        intent.putExtra(MovieDetail.MOVIE, movieDto);
+        startActivity(intent);
     }
 }
