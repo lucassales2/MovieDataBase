@@ -1,4 +1,6 @@
-package com.moviedatabase.networking.movies.dto;
+package com.moviedatabase.networking.movies.responses;
+
+import com.moviedatabase.networking.movies.dto.MovieDto;
 
 import java.util.List;
 

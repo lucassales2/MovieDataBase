@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="movie"
+            type="com.moviedatabase.viewmodels.MovieDetailViewModel" />
+
+        <import type="android.view.View" />
+    </data>
+
+    <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/mint"
+                android:orientation="vertical"
+                android:padding="@dimen/activity_vertical_margin">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center_vertical"
+                    android:text="@{movie.title}"
+                    android:textColor="@android:color/white"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/detail_original_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@{movie.originalTitle}"
+                    android:textColor="@android:color/white"
+                    android:textSize="22sp"
+                    android:visibility="@{movie.title == movie.originalTitle ? View.GONE : View.VISIBLE}" />
+            </LinearLayout>
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/detail_poster"
+                    android:layout_width="187dp"
+                    android:layout_height="278dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_toLeftOf="@+id/divider"
+                    android:padding="10dp"
+                    app:imgUrl="@{movie.posterPath}" />
+
+                <View
+                    android:id="@+id/divider"
+                    android:layout_width="0dip"
+                    android:layout_height="0dip"
+                    android:layout_centerHorizontal="true" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/divider"
+                    android:gravity="left"
+                    android:orientation="vertical"
+                    android:padding="@dimen/activity_horizontal_margin">
+
+                    <TextView
+                        android:id="@+id/detail_year_textview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{movie.releaseDate}"
+                        android:textAppearance="?android:textAppearanceLarge"
+                        android:textColor="@color/grey" />
+
+                    <TextView
+                        android:id="@+id/detail_duration_textview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{movie.runtime}"
+                        android:textAppearance="?android:textAppearanceLarge"
+                        android:textColor="@color/grey" />
+
+                    <TextView
+                        android:id="@+id/detail_rating_textview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@{movie.rating}"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:textColor="@android:color/black" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/activity_vertical_margin"
+                android:text="@{movie.overview}"
+                android:textAppearance="?android:textAppearanceMedium"
+                android:textColor="@color/grey" />
+        </LinearLayout>
+    </android.support.v4.widget.NestedScrollView>
+</layout>

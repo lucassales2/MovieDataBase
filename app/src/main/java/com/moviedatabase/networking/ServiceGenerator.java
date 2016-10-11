@@ -1,6 +1,7 @@
 package com.moviedatabase.networking;
 
 import java.io.IOException;
+import java.util.Locale;
 
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -41,6 +42,7 @@ public class ServiceGenerator {
 
                     HttpUrl url = originalHttpUrl.newBuilder()
                             .addQueryParameter("api_key", authToken)
+                            .addQueryParameter("language", String.format("%s-%s", Locale.getDefault().getLanguage(), Locale.getDefault().getCountry()))
                             .build();
 
                     // Request customization: add request headers

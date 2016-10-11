@@ -27,7 +27,7 @@ public class MovieDto implements Parcelable {
     private String overview;
     private String release_date;
     private List<Integer> genre_ids;
-    private long id;
+    private int id;
     private String original_title;
     private String original_language;
     private String title;
@@ -47,7 +47,7 @@ public class MovieDto implements Parcelable {
         this.release_date = in.readString();
         this.genre_ids = new ArrayList<Integer>();
         in.readList(this.genre_ids, Integer.class.getClassLoader());
-        this.id = in.readLong();
+        this.id = in.readInt();
         this.original_title = in.readString();
         this.original_language = in.readString();
         this.title = in.readString();
@@ -74,7 +74,7 @@ public class MovieDto implements Parcelable {
         return genre_ids;
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
@@ -126,7 +126,7 @@ public class MovieDto implements Parcelable {
         dest.writeString(this.overview);
         dest.writeString(this.release_date);
         dest.writeList(this.genre_ids);
-        dest.writeLong(this.id);
+        dest.writeInt(this.id);
         dest.writeString(this.original_title);
         dest.writeString(this.original_language);
         dest.writeString(this.title);
