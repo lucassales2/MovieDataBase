@@ -8,11 +8,11 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.moviedatabase.R;
+import com.moviedatabase.Utility;
 import com.moviedatabase.networking.movies.dto.MovieDto;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by lucas on 27/09/16.
@@ -20,9 +20,10 @@ import java.util.List;
 
 public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder> {
 
-    private static final String HTTP_IMAGE_TMDB_ORG_T_P_W185_S = "http://image.tmdb.org/t/p/w185/%s";
+
     private ArrayList<MovieDto> movieDtoList = new ArrayList<>();
     private WeakReference<MoviesAdapterListener> listener;
+    private int page = 0;
 
     public MoviesAdapter(ArrayList<MovieDto> movieDtos, MoviesAdapterListener listener) {
         movieDtoList = movieDtos;
@@ -49,7 +50,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         final MovieDto movieDto = movieDtoList.get(position);
-        Glide.with(holder.imageView.getContext()).load(String.format(HTTP_IMAGE_TMDB_ORG_T_P_W185_S, movieDto.getPoster_path())).into(holder.imageView);
+        Glide.with(holder.imageView.getContext()).load(String.format(Utility.HTTP_IMAGE_TMDB_ORG_T_P_W342_S, movieDto.getPoster_path())).into(holder.imageView);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,12 +69,6 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
         notifyItemInserted(movieDtoList.size() -1);
     }
 
-    public void addAll(List<MovieDto> movieDtos) {
-        int size = movieDtoList.size();
-        movieDtoList.addAll(movieDtos);
-        notifyItemRangeChanged(size, movieDtos.size());
-    }
-
     public ArrayList<MovieDto> getMovies() {
         return movieDtoList;
     }
@@ -81,6 +76,14 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
     public void clear() {
         movieDtoList.clear();
         notifyDataSetChanged();
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {

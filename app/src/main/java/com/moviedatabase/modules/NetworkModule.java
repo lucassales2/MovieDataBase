@@ -19,7 +19,6 @@ public class NetworkModule {
 
     private Context context;
 
-
     public NetworkModule(Context context) {
         this.context = context.getApplicationContext();
     }
