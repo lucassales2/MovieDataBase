@@ -4,13 +4,14 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!--laucher icon from Freepik - http://www.freepik.com/-->
     <application
         android:name=".MovieApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:configChanges="keyboardHidden|orientation|screenSize"
+        android:icon="@mipmap/ic_launcher_mdb"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:configChanges="keyboardHidden|orientation|screenSize"
         android:theme="@style/AppTheme.Main.Toolbar">
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -19,7 +20,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MovieDetail" />
+        <activity
+            android:name=".MovieDetailActivity"
+            android:label="DetailView" />
     </application>
 
 </manifest>

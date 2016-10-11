@@ -15,14 +15,19 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|enterAlways" />
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:theme="@style/ToolBarStyle" />
 
     </android.support.design.widget.AppBarLayout>
 
-    <FrameLayout
-        android:id="@+id/container"
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/fragment_forecast"
+        android:name="com.moviedatabase.MovieListFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:context="com.moviedatabase.MovieListFragment"
+        tools:layout="@android:layout/list_content" />
 </android.support.design.widget.CoordinatorLayout>
 
