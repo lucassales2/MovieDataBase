@@ -47,7 +47,7 @@ public class MovieDetailViewModel extends BaseObservable {
     }
 
     public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = originalTitle;
+        this.originalTitle = String.format("(%s)", originalTitle);
         notifyPropertyChanged(BR.originalTitle);
     }
 
@@ -77,7 +77,7 @@ public class MovieDetailViewModel extends BaseObservable {
     }
 
     public void setRuntime(Integer runtime) {
-        this.runtime = String.format("%dmin", runtime);
+        this.runtime = String.format("%d min", runtime);
         notifyPropertyChanged(BR.runtime);
     }
 }

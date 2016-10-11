@@ -22,7 +22,12 @@
         </activity>
         <activity
             android:name=".MovieDetailActivity"
-            android:label="DetailView" />
+            android:label="DetailView"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
     </application>
 
 </manifest>
