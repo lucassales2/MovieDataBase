@@ -31,14 +31,7 @@ public class MovieListFragment extends Fragment implements MoviesAdapterListener
     public final static String TAG = MovieListFragment.class.getSimpleName();
     private final String MOVIES = "movies";
     private MoviesAdapter adapter;
-    private RecyclerView recyclerView;
     private MovieListPresenter presenter;
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -56,7 +49,7 @@ public class MovieListFragment extends Fragment implements MoviesAdapterListener
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        recyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_main, container, false);
+        RecyclerView recyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_main, container, false);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         String title = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(getString(R.string.movie_option), getString(R.string.top_rated));
