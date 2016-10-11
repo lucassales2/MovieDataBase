@@ -9,7 +9,7 @@ import java.util.List;
  */
 
 public class VideoResponse {
-    public long id;
+    public int id;
     public List<VideoDto> results;
 
 }
