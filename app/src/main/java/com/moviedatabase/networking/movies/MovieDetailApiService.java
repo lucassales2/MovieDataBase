@@ -20,12 +20,12 @@ import static com.moviedatabase.networking.movies.Constants.VIDEOS;
 public interface MovieDetailApiService {
 
     @GET(CONTROLLER + "/{" + MOVIE_ID + "}")
-    Observable<MovieDetailsDto> getMovieDetails(@Path(MOVIE_ID) long movieId);
+    Observable<MovieDetailsDto> getMovieDetails(@Path(MOVIE_ID) int movieId);
 
 
     @GET(CONTROLLER + "/{" + MOVIE_ID + "}/" + VIDEOS)
-    Observable<VideoResponse> getVideosFromMovieId(@Path(MOVIE_ID) long movieId);
+    Observable<VideoResponse> getVideosFromMovieId(@Path(MOVIE_ID) int movieId);
 
     @GET(CONTROLLER + "/{" + MOVIE_ID + "}/" + REVIEWS)
-    Observable<ReviewResponse> getReviewsFromMovieId(@Path(MOVIE_ID) long movieId);
+    Observable<ReviewResponse> getReviewsFromMovieId(@Path(MOVIE_ID) int movieId);
 }

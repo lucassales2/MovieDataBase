@@ -5,6 +5,7 @@ import android.content.Context;
 import com.moviedatabase.R;
 import com.moviedatabase.networking.ServiceGenerator;
 import com.moviedatabase.networking.movies.MovieApiService;
+import com.moviedatabase.networking.movies.MovieDetailApiService;
 
 import javax.inject.Singleton;
 
@@ -27,6 +28,12 @@ public class NetworkModule {
     @Singleton
     MovieApiService provideMovieApiService() {
         return ServiceGenerator.createService(MovieApiService.class, context.getString(R.string.apiV3));
+    }
+
+    @Provides
+    @Singleton
+    MovieDetailApiService provideMovieDetailsApiService() {
+        return ServiceGenerator.createService(MovieDetailApiService.class, context.getString(R.string.apiV3), false);
     }
 
 }

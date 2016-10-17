@@ -3,29 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="@dimen/activity_vertical_margin">
+    android:padding="@dimen/activity_horizontal_margin">
 
     <ImageView
-        android:id="@+id/imageViewTrailer"
-        android:layout_width="60dp"
-        android:layout_height="45dp"
-        android:layout_gravity="center_vertical" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/ic_play_button" />
 
     <TextView
         android:id="@+id/textViewTrailer"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_horizontal_margin" />
-
-    <View
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <ImageView
-        android:id="@+id/imageViewShare"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_vertical"
-        android:src="@drawable/ic_share_black_24dp" />
 </LinearLayout>
