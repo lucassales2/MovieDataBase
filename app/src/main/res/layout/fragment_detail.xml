@@ -35,7 +35,7 @@
                     android:gravity="center_vertical"
                     android:text="@{movie.title}"
                     android:textColor="@android:color/white"
-                    android:textSize="32sp" />
+                    android:textSize="@dimen/textsize_ultra_large" />
 
                 <TextView
                     android:id="@+id/detail_original_name"
@@ -44,7 +44,7 @@
                     android:layout_marginTop="6dp"
                     android:text="@{movie.originalTitle}"
                     android:textColor="@android:color/white"
-                    android:textSize="22sp"
+                    android:textSize="@dimen/textsize_ultra"
                     android:visibility="@{movie.title == movie.originalTitle ? View.GONE : View.VISIBLE}" />
             </LinearLayout>
 
@@ -109,6 +109,53 @@
                 android:text="@{movie.overview}"
                 android:textAppearance="?android:textAppearanceMedium"
                 android:textColor="@color/grey" />
+
+            <View
+                android:id="@+id/divider_trailers"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:background="@color/grey"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textViewTrailer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:text="Trailers"
+                android:visibility="gone" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerView_videos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
+            <View
+                android:id="@+id/divider_reviews"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:background="@color/grey"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textViewReview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:text="Reviews"
+                android:visibility="gone" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recyclerView_reviews"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
         </LinearLayout>
     </android.support.v4.widget.NestedScrollView>
 </layout>
