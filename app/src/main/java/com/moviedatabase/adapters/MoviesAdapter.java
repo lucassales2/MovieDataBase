@@ -50,7 +50,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         final MovieDto movieDto = movieDtoList.get(position);
-        Glide.with(holder.imageView.getContext()).load(String.format(Utility.HTTP_IMAGE_TMDB_ORG_T_P_W342_S, movieDto.getPoster_path())).into(holder.imageView);
+        Glide.with(holder.imageView.getContext()).load(Utility.getFullPosterPath(movieDto.getPosterPath())).into(holder.imageView);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -89,7 +89,7 @@ public class MoviesAdapter extends RecyclerView.Adapter<MoviesAdapter.ViewHolder
     class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
 
-        public ViewHolder(View itemView) {
+        private ViewHolder(View itemView) {
             super(itemView);
             imageView = (ImageView) itemView.findViewById(R.id.image_view);
         }
