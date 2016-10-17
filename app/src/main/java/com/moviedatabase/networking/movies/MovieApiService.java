@@ -1,28 +1,22 @@
 package com.moviedatabase.networking.movies;
 
-import com.moviedatabase.networking.movies.dto.MovieDetailsDto;
 import com.moviedatabase.networking.movies.responses.MoviesResponse;
-import com.moviedatabase.networking.movies.responses.ReviewResponse;
-import com.moviedatabase.networking.movies.responses.VideoResponse;
 
 import retrofit2.http.GET;
-import retrofit2.http.Path;
 import retrofit2.http.Query;
 import rx.Observable;
+
+import static com.moviedatabase.networking.movies.Constants.CONTROLLER;
+import static com.moviedatabase.networking.movies.Constants.NOW_PLAYING;
+import static com.moviedatabase.networking.movies.Constants.POPULAR;
+import static com.moviedatabase.networking.movies.Constants.TOP_RATED;
+import static com.moviedatabase.networking.movies.Constants.UPCOMING;
 
 /**
  * Created by lucas on 27/09/16.
  */
 
 public interface MovieApiService {
-    String CONTROLLER = "movie";
-    String POPULAR = "popular";
-    String TOP_RATED = "top_rated";
-    String NOW_PLAYING = "now_playing";
-    String UPCOMING = "upcoming";
-    String VIDEOS = "videos";
-    String MOVIE_ID = "movie_id";
-    String REVIEWS = "reviews";
 
     @GET(CONTROLLER + "/" + TOP_RATED)
     Observable<MoviesResponse> getTopRatedMovies();
@@ -56,15 +50,7 @@ public interface MovieApiService {
 
     //----------
 
-    @GET(CONTROLLER + "/{" + MOVIE_ID + "}")
-    Observable<MovieDetailsDto> getMovieDetails(@Path(MOVIE_ID) int movieId);
 
-
-    @GET(CONTROLLER + "/{" + MOVIE_ID + "}/" + VIDEOS)
-    Observable<VideoResponse> getVideosFromMovieId(@Path(MOVIE_ID) int movieId);
-
-    @GET(CONTROLLER + "/{" + MOVIE_ID + "}/" + REVIEWS)
-    Observable<ReviewResponse> getReviewsFromMovieId(@Path(MOVIE_ID) int movieId);
 
 
 }
