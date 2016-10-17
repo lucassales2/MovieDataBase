@@ -20,11 +20,13 @@ public class MovieDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        MovieDto movieDto = getIntent().getParcelableExtra(MOVIE);
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.container, MovieDetailFragment.newInstance(movieDto), MovieDetailFragment.TAG)
-                .commit();
+        if (savedInstanceState == null) {
+            MovieDto movieDto = getIntent().getParcelableExtra(MOVIE);
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.container, MovieDetailFragment.newInstance(movieDto), MovieDetailFragment.TAG)
+                    .commit();
+        }
     }
 
     @Override

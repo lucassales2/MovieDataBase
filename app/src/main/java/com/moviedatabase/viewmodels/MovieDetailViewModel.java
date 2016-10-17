@@ -64,8 +64,7 @@ public class MovieDetailViewModel extends BaseObservable implements Parcelable {
         this.rating = in.readFloat();
         this.overview = in.readString();
         this.runtime = in.readString();
-        this.videoDtoList = new ArrayList<VideoDto>();
-        in.readList(this.videoDtoList, VideoDto.class.getClassLoader());
+        this.videoDtoList = in.createTypedArrayList(VideoDto.CREATOR);
         this.reviewDtos = in.createTypedArrayList(ReviewDto.CREATOR);
     }
 
@@ -144,7 +143,7 @@ public class MovieDetailViewModel extends BaseObservable implements Parcelable {
         dest.writeFloat(this.rating);
         dest.writeString(this.overview);
         dest.writeString(this.runtime);
-        dest.writeList(this.videoDtoList);
+        dest.writeTypedList(this.videoDtoList);
         dest.writeTypedList(this.reviewDtos);
     }
 }

@@ -43,6 +43,7 @@ public class MovieListFragment extends Fragment implements MoviesAdapterListener
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         presenter = new MovieListPresenter(getContext(), this);
+        setRetainInstance(true);
         setHasOptionsMenu(true);
     }
 

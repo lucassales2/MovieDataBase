@@ -65,6 +65,7 @@ public class MovieDetailFragment extends Fragment implements MovieDetailPresente
             movieDto = getArguments().getParcelable(MOVIE_KEY);
             assert movieDto != null;
             presenter = new MovieDetailPresenter(movieDto.getId(), this);
+            setRetainInstance(true);
         } else {
             throw new IllegalArgumentException("Start fragment with newInstance static method");
         }
