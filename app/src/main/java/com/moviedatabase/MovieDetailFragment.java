@@ -27,7 +27,6 @@ import com.moviedatabase.presenters.MovieDetailPresenterListener;
 import com.moviedatabase.viewmodels.MovieDetailViewModel;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Created by lucas on 10/10/16.
@@ -53,7 +52,7 @@ public class MovieDetailFragment extends Fragment implements MovieDetailPresente
     public static MovieDetailFragment newInstance(MovieDto movieDto) {
         MovieDetailFragment fragment = new MovieDetailFragment();
         Bundle args = new Bundle();
-        args.putParcelable(MOVIE_KEY, movieDto);
+//        args.putParcelable(MOVIE_KEY, movieDto);
         fragment.setArguments(args);
         return fragment;
     }
@@ -61,13 +60,14 @@ public class MovieDetailFragment extends Fragment implements MovieDetailPresente
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments().containsKey(MOVIE_KEY)) {
-            movieDto = getArguments().getParcelable(MOVIE_KEY);
-            assert movieDto != null;
-            presenter = new MovieDetailPresenter(movieDto.getId(), this);
-        } else {
-            throw new IllegalArgumentException("Start fragment with newInstance static method");
-        }
+//        if (getArguments() == null || !getArguments().containsKey(MOVIE_KEY)) {
+//            throw new IllegalArgumentException("Start fragment with newInstance static method");
+//        } else {
+//            movieDto = getArguments().getParcelable(MOVIE_KEY);
+//            assert movieDto != null;
+//            presenter = new MovieDetailPresenter(movieDto.getId(), this);
+//            setRetainInstance(true);
+//        }
     }
 
     @Nullable
@@ -112,8 +112,8 @@ public class MovieDetailFragment extends Fragment implements MovieDetailPresente
 
     @Override
     public void onMovieDetailsLoaded(MovieDetailsDto movieDetailsDto) {
-        if (!movieDetailsDto.getOriginal_language().equals(Locale.getDefault().getLanguage()) && !movieDetailsDto.getTitle().equals(movieDetailsDto.getOriginal_title())) {
-            viewModel.setOriginalTitle(movieDetailsDto.getOriginal_title());
+        if (!movieDetailsDto.getTitle().equals(movieDetailsDto.getOriginalTitle())) {
+            viewModel.setOriginalTitle(movieDetailsDto.getOriginalTitle());
         }
         viewModel.setRuntime(movieDetailsDto.getRuntime());
     }
