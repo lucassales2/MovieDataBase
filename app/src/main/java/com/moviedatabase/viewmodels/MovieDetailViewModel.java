@@ -95,8 +95,14 @@ public class MovieDetailViewModel extends BaseObservable implements Parcelable {
     }
 
     public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = String.format("(%s)", originalTitle);
+        this.originalTitle = originalTitle;
         notifyPropertyChanged(BR.originalTitle);
+        notifyPropertyChanged(BR.formattedOriginalTitle);
+    }
+
+    @Bindable
+    public String getFormattedOriginalTitle() {
+        return String.format("(%s)", getOriginalTitle());
     }
 
     public String getReleaseDate() {
