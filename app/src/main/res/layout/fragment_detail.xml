@@ -42,7 +42,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="@{movie.originalTitle}"
+                    android:text="@{movie.formattedOriginalTitle}"
                     android:textColor="@android:color/white"
                     android:textSize="@dimen/textsize_ultra"
                     android:visibility="@{movie.title == movie.originalTitle ? View.GONE : View.VISIBLE}" />

@@ -1,10 +1,15 @@
 package com.moviedatabase;
 
-import android.content.Intent;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,35 +19,47 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.moviedatabase.adapters.MoviesAdapter;
-import com.moviedatabase.adapters.MoviesAdapterListener;
-import com.moviedatabase.networking.movies.dto.MovieDto;
-import com.moviedatabase.presenters.MovieListPresenter;
-import com.moviedatabase.presenters.MovieListPresenterListener;
+import com.moviedatabase.adapters.MoviesCursorAdapter;
+import com.moviedatabase.adapters.MoviesCursorAdapterListener;
+import com.moviedatabase.data.MovieContract;
+import com.moviedatabase.sync.MovieSyncAdapter;
+import com.moviedatabase.sync.SyncMovie;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.inject.Inject;
 
 /**
  * Created by lucas on 07/10/16.
  */
 
-public class MovieListFragment extends Fragment implements MoviesAdapterListener, MovieListPresenterListener {
+public class MovieListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, MoviesCursorAdapterListener, SharedPreferences.OnSharedPreferenceChangeListener {
     public final static String TAG = MovieListFragment.class.getSimpleName();
-    private final String MOVIES = "movies";
-    private MoviesAdapter adapter;
-    private MovieListPresenter presenter;
+    public static final int COL_ID = 0;
+    public static final int COL_POSTER_PATH = 1;
+
+    private final String SORT_ORDER = "sortOrder";
+    private final String SELECTION = "selection";
+    private final String SELECTION_ARGS = "selectionArgs";
+    @Inject
+    SharedPreferences sharedPreferences;
+    @Inject
+    SyncMovie syncMovie;
+    private MoviesCursorAdapter cursorAdapter;
+    private Callback callback;
+    private int LOADER_ID = 0;
+    private GridLayoutManager gridLayoutManager;
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelableArrayList(MOVIES, adapter.getMovies());
-        super.onSaveInstanceState(outState);
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        callback = (Callback) context;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        presenter = new MovieListPresenter(getContext(), this);
+        MovieApplication.getInstance().getComponent().inject(this);
+        MovieSyncAdapter.syncImmediately(getContext());
+        getLoaderManager().initLoader(LOADER_ID, createLoaderArguments(), this);
         setRetainInstance(true);
         setHasOptionsMenu(true);
     }
@@ -52,21 +69,26 @@ public class MovieListFragment extends Fragment implements MoviesAdapterListener
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         RecyclerView recyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_main, container, false);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
-        String title = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(getString(R.string.movie_option), getString(R.string.top_rated));
+        String title = sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated));
         getActivity().setTitle(title);
-        if (savedInstanceState == null) {
-            presenter.fetchMovies(title);
-            adapter = new MoviesAdapter(this);
-        } else {
-            ArrayList<MovieDto> movies = savedInstanceState.getParcelableArrayList(MOVIES);
-            adapter = new MoviesAdapter(movies, this);
-        }
-        recyclerView.setAdapter(adapter);
+        gridLayoutManager = new GridLayoutManager(getContext(), 2);
+        recyclerView.setLayoutManager(gridLayoutManager);
+        cursorAdapter = new MoviesCursorAdapter(null, this);
+        recyclerView.setAdapter(cursorAdapter);
         return recyclerView;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+    }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -76,40 +98,87 @@ public class MovieListFragment extends Fragment implements MoviesAdapterListener
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        adapter.clear();
+        SharedPreferences.Editor edit = sharedPreferences.edit();
         switch (item.getItemId()) {
             case R.id.action_popular:
-                presenter.fetchMovies(getString(R.string.popular));
+                edit.putString(getString(R.string.movie_option), getString(R.string.popular)).apply();
                 break;
             case R.id.action_now_playing:
-                presenter.fetchMovies(getString(R.string.now_playing));
+                edit.putString(getString(R.string.movie_option), getString(R.string.now_playing)).apply();
                 break;
             case R.id.action_upcoming:
-                presenter.fetchMovies(getString(R.string.upcoming));
+                edit.putString(getString(R.string.movie_option), getString(R.string.upcoming)).apply();
                 break;
             case R.id.action_top_rated:
-                presenter.fetchMovies(getString(R.string.top_rated));
+                edit.putString(getString(R.string.movie_option), getString(R.string.top_rated)).apply();
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onItemClick(MovieDto movieDto) {
-        Intent intent = new Intent(getContext(), MovieDetailActivity.class);
-        intent.putExtra(MovieDetailActivity.MOVIE, movieDto);
-        startActivity(intent);
+    public void setTwoPane(boolean twoPane) {
+        if (twoPane) gridLayoutManager.setSpanCount(3);
     }
 
     @Override
-    public void onMoviesLoaded(List<MovieDto> results) {
-        for (MovieDto result : results) {
-            adapter.add(result);
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(
+                getActivity(),
+                MovieContract.MovieEntry.CONTENT_URI,
+                new String[]{MovieContract.MovieEntry._ID, MovieContract.MovieEntry.COLUMN_POSTER_PATH},
+                args.getString(SELECTION, null),
+                args.getStringArray(SELECTION_ARGS),
+                args.getString(SORT_ORDER));
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        cursorAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        cursorAdapter.swapCursor(null);
+    }
+
+    @Override
+    public void onItemClick(int id) {
+
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getString(R.string.movie_option))) {
+            MovieSyncAdapter.syncImmediately(getContext());
+            getActivity().setTitle(sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated)));
+            getLoaderManager().restartLoader(LOADER_ID, createLoaderArguments(), this);
         }
     }
 
-    @Override
-    public void onTitleChanged(String title) {
-        getActivity().setTitle(title);
+    private Bundle createLoaderArguments() {
+        String movieOption = sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated));
+        Bundle bundle = new Bundle();
+        if (movieOption.equals(getString(R.string.top_rated))) {
+            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RATING + " DESC");
+            bundle.putString(SELECTION, null);
+            bundle.putStringArrayList(SELECTION_ARGS, null);
+        } else if (movieOption.equals(getString(R.string.popular))) {
+            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC");
+            bundle.putString(SELECTION, null);
+            bundle.putStringArrayList(SELECTION_ARGS, null);
+        } else if (movieOption.equals(getString(R.string.now_playing))) {
+            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + " DESC");
+            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + "<= ?");
+            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis())});
+        } else {
+            bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + " ASC");
+            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + ">= ?");
+            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis())});
+        }
+        return bundle;
+    }
+
+    public interface Callback {
+        void onItemSelected(Uri dateUri);
     }
 }
