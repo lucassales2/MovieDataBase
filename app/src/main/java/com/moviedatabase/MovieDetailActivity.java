@@ -6,11 +6,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.moviedatabase.networking.movies.dto.MovieDto;
-
 public class MovieDetailActivity extends AppCompatActivity {
 
-    public final static String MOVIE = "movie";
+    public final static String MOVIE_ID = "movieId";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,10 +19,10 @@ public class MovieDetailActivity extends AppCompatActivity {
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         if (savedInstanceState == null) {
-            MovieDto movieDto = getIntent().getParcelableExtra(MOVIE);
+            long movieId = getIntent().getLongExtra(MOVIE_ID, -1L);
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.container, MovieDetailFragment.newInstance(movieDto), MovieDetailFragment.TAG)
+                    .replace(R.id.container, MovieDetailFragment.newInstance(movieId), MovieDetailFragment.TAG)
                     .commit();
         }
     }

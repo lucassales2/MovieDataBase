@@ -3,37 +3,19 @@ package com.moviedatabase.viewmodels;
 import android.databinding.BaseObservable;
 import android.databinding.Bindable;
 import android.databinding.BindingAdapter;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
-import com.moviedatabase.BR;
 import com.moviedatabase.Utility;
-import com.moviedatabase.networking.movies.dto.MovieDto;
-import com.moviedatabase.networking.movies.dto.ReviewDto;
-import com.moviedatabase.networking.movies.dto.VideoDto;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 /**
  * Created by lucas on 10/10/16.
  */
 
-public class MovieDetailViewModel extends BaseObservable implements Parcelable {
-    public static final Parcelable.Creator<MovieDetailViewModel> CREATOR = new Parcelable.Creator<MovieDetailViewModel>() {
-        @Override
-        public MovieDetailViewModel createFromParcel(Parcel source) {
-            return new MovieDetailViewModel(source);
-        }
+public class MovieDetailViewModel extends BaseObservable {
 
-        @Override
-        public MovieDetailViewModel[] newArray(int size) {
-            return new MovieDetailViewModel[size];
-        }
-    };
     private String originalTitle;
     private String title;
     private String posterPath;
@@ -41,63 +23,31 @@ public class MovieDetailViewModel extends BaseObservable implements Parcelable {
     private float rating;
     private String overview;
     private String runtime;
-    private ArrayList<VideoDto> videoDtoList;
-    private ArrayList<ReviewDto> reviewDtos;
+    private boolean isFavorite;
 
-    public MovieDetailViewModel(MovieDto movieDto) {
-        this.title = movieDto.getTitle();
-        posterPath = Utility.getFullPosterPath(movieDto.getPosterPath());
-        releaseDate = movieDto.getReleaseDate();
-        rating = movieDto.getVoteAverage();
-        overview = movieDto.getOverview();
-        originalTitle = movieDto.getOriginalTitle();
-        videoDtoList = new ArrayList<>();
-        reviewDtos = new ArrayList<>();
-        runtime = "";
-    }
-
-    protected MovieDetailViewModel(Parcel in) {
-        this.originalTitle = in.readString();
-        this.title = in.readString();
-        this.posterPath = in.readString();
-        this.releaseDate = in.readString();
-        this.rating = in.readFloat();
-        this.overview = in.readString();
-        this.runtime = in.readString();
-        this.videoDtoList = in.createTypedArrayList(VideoDto.CREATOR);
-        this.reviewDtos = in.createTypedArrayList(ReviewDto.CREATOR);
+    public MovieDetailViewModel(String originalTitle, String overview, String posterPath, float rating, String releaseDate, String runtime, String title, boolean isFavorite) {
+        this.isFavorite = isFavorite;
+        this.originalTitle = originalTitle;
+        this.overview = overview;
+        this.posterPath = posterPath;
+        this.rating = rating;
+        this.releaseDate = releaseDate;
+        this.runtime = runtime;
+        this.title = title;
     }
 
     @BindingAdapter("imgUrl")
     public static void bindImgUrl(ImageView imageView, String url) {
-        Glide.with(imageView.getContext()).load(url).into(imageView);
+        Glide.with(imageView.getContext()).load(Utility.getFullPosterPath(url)).into(imageView);
     }
 
-    public ArrayList<VideoDto> getVideos() {
-        return videoDtoList;
-    }
-
-    public List<ReviewDto> getReviews() {
-        return reviewDtos;
-    }
-
-    public void addVideos(List<VideoDto> videoDtoList) {
-        this.videoDtoList.addAll(videoDtoList);
-    }
-
-    public void addReviews(List<ReviewDto> reviewDtos) {
-        this.reviewDtos.addAll(reviewDtos);
+    public boolean isFavorite() {
+        return isFavorite;
     }
 
     @Bindable
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    public void setOriginalTitle(String originalTitle) {
-        this.originalTitle = originalTitle;
-        notifyPropertyChanged(BR.originalTitle);
-        notifyPropertyChanged(BR.formattedOriginalTitle);
     }
 
     @Bindable
@@ -106,7 +56,7 @@ public class MovieDetailViewModel extends BaseObservable implements Parcelable {
     }
 
     public String getReleaseDate() {
-        return releaseDate.substring(0, 4);
+        return releaseDate;
     }
 
     public String getRating() {
@@ -125,31 +75,8 @@ public class MovieDetailViewModel extends BaseObservable implements Parcelable {
         return overview;
     }
 
-    @Bindable
     public String getRuntime() {
-        return runtime;
+        return String.format("%s min", runtime);
     }
 
-    public void setRuntime(int runtime) {
-        this.runtime = String.format("%d min", runtime);
-        notifyPropertyChanged(BR.runtime);
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.originalTitle);
-        dest.writeString(this.title);
-        dest.writeString(this.posterPath);
-        dest.writeString(this.releaseDate);
-        dest.writeFloat(this.rating);
-        dest.writeString(this.overview);
-        dest.writeString(this.runtime);
-        dest.writeTypedList(this.videoDtoList);
-        dest.writeTypedList(this.reviewDtos);
-    }
 }
