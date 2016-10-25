@@ -1,4 +1,4 @@
-package com.moviedatabase.modules;
+package com.moviedatabase.binding.modules;
 
 import android.content.Context;
 

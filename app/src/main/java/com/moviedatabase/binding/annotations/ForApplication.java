@@ -1,4 +1,4 @@
-package com.moviedatabase.annotations;
+package com.moviedatabase.binding.annotations;
 
 /**
  * Created by lucas on 09/10/16.
