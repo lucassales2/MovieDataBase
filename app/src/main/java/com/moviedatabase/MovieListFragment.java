@@ -3,7 +3,6 @@ package com.moviedatabase;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -23,7 +22,6 @@ import com.moviedatabase.adapters.MoviesCursorAdapter;
 import com.moviedatabase.adapters.MoviesCursorAdapterListener;
 import com.moviedatabase.data.MovieContract;
 import com.moviedatabase.sync.MovieSyncAdapter;
-import com.moviedatabase.sync.SyncMovie;
 
 import javax.inject.Inject;
 
@@ -39,14 +37,15 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private final String SORT_ORDER = "sortOrder";
     private final String SELECTION = "selection";
     private final String SELECTION_ARGS = "selectionArgs";
+    private final String LAST_SELECTED = "lastSelected";
     @Inject
     SharedPreferences sharedPreferences;
-    @Inject
-    SyncMovie syncMovie;
+    private int lastSelected = 0;
     private MoviesCursorAdapter cursorAdapter;
     private Callback callback;
     private int LOADER_ID = 0;
     private GridLayoutManager gridLayoutManager;
+    private boolean twoPane;
 
     @Override
     public void onAttach(Context context) {
@@ -58,7 +57,11 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         MovieApplication.getInstance().getComponent().inject(this);
-        MovieSyncAdapter.syncImmediately(getContext());
+        if (savedInstanceState == null) {
+            MovieSyncAdapter.syncImmediately(getContext());
+        } else {
+            lastSelected = savedInstanceState.getInt(LAST_SELECTED, 0);
+        }
         getLoaderManager().initLoader(LOADER_ID, createLoaderArguments(), this);
         setRetainInstance(true);
         setHasOptionsMenu(true);
@@ -76,6 +79,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         cursorAdapter = new MoviesCursorAdapter(null, this);
         recyclerView.setAdapter(cursorAdapter);
         return recyclerView;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt(LAST_SELECTED, lastSelected);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -117,7 +126,7 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     public void setTwoPane(boolean twoPane) {
-        if (twoPane) gridLayoutManager.setSpanCount(3);
+        this.twoPane = twoPane;
     }
 
     @Override
@@ -132,8 +141,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        cursorAdapter.swapCursor(data);
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        cursorAdapter.swapCursor(cursor);
+        if (twoPane && cursor.moveToPosition(lastSelected)) {
+            callback.onItemSelected(cursor.getLong(0));
+        }
+
     }
 
     @Override
@@ -142,8 +155,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onItemClick(int id) {
-
+    public void onItemClick(long id, int position) {
+        lastSelected = position;
+        callback.onItemSelected(id);
     }
 
     @Override
@@ -160,8 +174,8 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
         Bundle bundle = new Bundle();
         if (movieOption.equals(getString(R.string.top_rated))) {
             bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RATING + " DESC");
-            bundle.putString(SELECTION, null);
-            bundle.putStringArrayList(SELECTION_ARGS, null);
+            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + "<= ?");
+            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis() - 7889238000L)});
         } else if (movieOption.equals(getString(R.string.popular))) {
             bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_POPULARITY + " DESC");
             bundle.putString(SELECTION, null);
@@ -179,6 +193,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     public interface Callback {
-        void onItemSelected(Uri dateUri);
+        void onItemSelected(long movieId);
     }
 }
