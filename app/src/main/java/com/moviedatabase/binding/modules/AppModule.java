@@ -1,11 +1,11 @@
-package com.moviedatabase.modules;
+package com.moviedatabase.binding.modules;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import com.moviedatabase.annotations.ForApplication;
 import com.moviedatabase.MovieApplication;
+import com.moviedatabase.binding.annotations.ForApplication;
 
 import javax.inject.Singleton;
 

@@ -2,10 +2,10 @@ package com.moviedatabase;
 
 import android.app.Application;
 
-import com.moviedatabase.components.ApplicationComponent;
-import com.moviedatabase.components.DaggerApplicationComponent;
-import com.moviedatabase.modules.AppModule;
-import com.moviedatabase.modules.NetworkModule;
+import com.moviedatabase.binding.components.ApplicationComponent;
+import com.moviedatabase.binding.components.DaggerApplicationComponent;
+import com.moviedatabase.binding.modules.AppModule;
+import com.moviedatabase.binding.modules.NetworkModule;
 
 /**
  * Created by lucas on 27/09/16.

@@ -11,4 +11,4 @@ Libraries used
 
 Launcher icon from [Freepik](http://www.freepik.com/)
 
-Source for [EndlessScrollListener](https://github.com/dheeru4u/Flicks/blob/master/app/src/main/java/com/dheeru/flicks/events/EndlessScrollListener.java)
+Source for [CursorRecyclerViewAdapter](https://gist.github.com/skyfishjy/443b7448f59be978bc59)

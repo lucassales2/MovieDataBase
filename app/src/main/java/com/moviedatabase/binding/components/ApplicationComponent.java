@@ -1,8 +1,8 @@
-package com.moviedatabase.components;
+package com.moviedatabase.binding.components;
 
 import com.moviedatabase.MovieListFragment;
-import com.moviedatabase.modules.AppModule;
-import com.moviedatabase.modules.NetworkModule;
+import com.moviedatabase.binding.modules.AppModule;
+import com.moviedatabase.binding.modules.NetworkModule;
 import com.moviedatabase.sync.MovieSyncAdapter;
 
 import javax.inject.Singleton;
