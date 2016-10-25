@@ -9,6 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        android:minHeight="275dp" />
+        android:minHeight="@dimen/poster_min_height" />
 
 </LinearLayout>
