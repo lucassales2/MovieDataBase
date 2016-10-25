@@ -30,12 +30,13 @@ public class MoviesCursorAdapter extends CursorRecyclerViewAdapter<MoviesCursorA
 
     @Override
     public void onBindViewHolder(ViewHolder holder, Cursor cursor) {
-        final int id = cursor.getInt(MovieListFragment.COL_ID);
+        final long id = cursor.getInt(MovieListFragment.COL_ID);
+        final int position = cursor.getPosition();
         Glide.with(holder.imageView.getContext()).load(Utility.getFullPosterPath(cursor.getString(MovieListFragment.COL_POSTER_PATH))).into(holder.imageView);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                listener.get().onItemClick(id);
+                listener.get().onItemClick(id, position);
             }
         });
     }

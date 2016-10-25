@@ -5,5 +5,5 @@ package com.moviedatabase.adapters;
  */
 
 public interface MoviesCursorAdapterListener {
-    void onItemClick(int id);
+    void onItemClick(long id, int position);
 }

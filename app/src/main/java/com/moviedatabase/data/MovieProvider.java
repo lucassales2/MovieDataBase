@@ -1,12 +1,14 @@
 package com.moviedatabase.data;
 
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -20,34 +22,23 @@ import java.util.Map;
 
 public class MovieProvider extends ContentProvider {
     static final int MOVIE = 100;
-    static final int MOVIE_WITH_VIDEO_AND_REVIEW = 101;
+    static final int MOVIE_ITEM = 101;
     static final int VIDEO = 200;
     static final int REVIEW = 300;
     // The URI Matcher used by this content provider.
     private static final UriMatcher sUriMatcher = buildUriMatcher();
-//    private static final SQLiteQueryBuilder sWeatherByLocationSettingQueryBuilder;
-    //location.location_setting = ?
+    private static final SQLiteQueryBuilder sMovieWithVideoAndReviewQueryBuilder;
 
-//
-//    static {
-//        sWeatherByLocationSettingQueryBuilder = new SQLiteQueryBuilder();
-//
-//        //This is an inner join which looks like
-//        //weather INNER JOIN location ON weather.location_id = location._id
-//        sWeatherByLocationSettingQueryBuilder.setTables(
-//                MovieContract.WeatherEntry.TABLE_NAME + " INNER JOIN " +
-//                        MovieContract.LocationEntry.TABLE_NAME +
-//                        " ON " + MovieContract.WeatherEntry.TABLE_NAME +
-//                        "." + MovieContract.WeatherEntry.COLUMN_LOC_KEY +
-//                        " = " + MovieContract.LocationEntry.TABLE_NAME +
-//                        "." + MovieContract.LocationEntry._ID);
-//    }
+    static {
+        sMovieWithVideoAndReviewQueryBuilder = new SQLiteQueryBuilder();
+
+    }
 
     private MovieDbHelper mOpenHelper;
 
     /*
         Students: Here is where you need to create the UriMatcher. This UriMatcher will
-        match each URI to the MOVIE, MOVIE_WITH_VIDEO_AND_REVIEW, WEATHER_WITH_LOCATION_AND_DATE,
+        match each URI to the MOVIE, MOVIE_ITEM, WEATHER_WITH_LOCATION_AND_DATE,
         and REVIEW integer constants defined above.  You can test this by uncommenting the
         testUriMatcher test within TestUriMatcher.
      */
@@ -56,7 +47,7 @@ public class MovieProvider extends ContentProvider {
         matcher.addURI(MovieContract.CONTENT_AUTHORITY, MovieContract.PATH_REVIEW, REVIEW);
         matcher.addURI(MovieContract.CONTENT_AUTHORITY, MovieContract.PATH_VIDEO, VIDEO);
         matcher.addURI(MovieContract.CONTENT_AUTHORITY, MovieContract.PATH_MOVIE, MOVIE);
-        matcher.addURI(MovieContract.CONTENT_AUTHORITY, MovieContract.PATH_MOVIE + "/*", MOVIE_WITH_VIDEO_AND_REVIEW);
+        matcher.addURI(MovieContract.CONTENT_AUTHORITY, MovieContract.PATH_MOVIE + "/*", MOVIE_ITEM);
         return matcher;
     }
 
@@ -107,6 +98,20 @@ public class MovieProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         Cursor retCursor;
         switch (sUriMatcher.match(uri)) {
+            case MOVIE_ITEM: {
+                long id = ContentUris.parseId(uri);
+                SQLiteDatabase readableDatabase = mOpenHelper.getReadableDatabase();
+                retCursor = readableDatabase.query(
+                        MovieContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        MovieContract.MovieEntry._ID + " =?",
+                        new String[]{String.valueOf(id)},
+                        null,
+                        null,
+                        sortOrder,
+                        null);
+                break;
+            }
             case MOVIE: {
                 SQLiteDatabase readableDatabase = mOpenHelper.getReadableDatabase();
                 retCursor = readableDatabase.query(
@@ -120,6 +125,7 @@ public class MovieProvider extends ContentProvider {
                         null);
                 break;
             }
+
             case REVIEW: {
                 SQLiteDatabase readableDatabase = mOpenHelper.getReadableDatabase();
                 retCursor = readableDatabase.query(
@@ -158,7 +164,7 @@ public class MovieProvider extends ContentProvider {
     @Override
     public String getType(Uri uri) {
         switch (sUriMatcher.match(uri)) {
-            case MOVIE_WITH_VIDEO_AND_REVIEW:
+            case MOVIE_ITEM:
                 return MovieContract.MovieEntry.CONTENT_ITEM_TYPE;
             case MOVIE:
                 return MovieContract.MovieEntry.CONTENT_TYPE;

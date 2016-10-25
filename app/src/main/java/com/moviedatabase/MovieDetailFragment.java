@@ -1,12 +1,16 @@
 package com.moviedatabase;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,45 +18,77 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.moviedatabase.adapters.ReviewsAdapter;
+import com.moviedatabase.adapters.ReviewCursorAdapter;
 import com.moviedatabase.adapters.ReviewsAdapterListener;
-import com.moviedatabase.adapters.TrailersAdaper;
-import com.moviedatabase.adapters.TrailersAdapterListener;
-import com.moviedatabase.networking.movies.dto.MovieDetailsDto;
-import com.moviedatabase.networking.movies.dto.MovieDto;
-import com.moviedatabase.networking.movies.dto.ReviewDto;
-import com.moviedatabase.networking.movies.dto.VideoDto;
-import com.moviedatabase.presenters.MovieDetailPresenter;
-import com.moviedatabase.presenters.MovieDetailPresenterListener;
+import com.moviedatabase.adapters.VideosAdapterListener;
+import com.moviedatabase.adapters.VideosCursorAdapter;
+import com.moviedatabase.data.MovieContract.MovieEntry;
+import com.moviedatabase.data.MovieContract.ReviewEntry;
+import com.moviedatabase.data.MovieContract.VideoEntry;
+import com.moviedatabase.sync.MovieSyncAdapter;
 import com.moviedatabase.viewmodels.MovieDetailViewModel;
 
-import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by lucas on 10/10/16.
  */
 
-public class MovieDetailFragment extends Fragment implements MovieDetailPresenterListener, TrailersAdapterListener, ReviewsAdapterListener {
+public class MovieDetailFragment extends Fragment implements VideosAdapterListener, ReviewsAdapterListener {
     public static final String TAG = MovieListFragment.class.getSimpleName();
-    private static final String MOVIE_VM_KEY = "movieVM";
-    private static final String MOVIE_KEY = "movie";
 
-    private MovieDetailPresenter presenter;
-    private MovieDetailViewModel viewModel;
-    private TrailersAdaper trailersAdaper;
-    private ReviewsAdapter reviewsAdapter;
+    public static final int INDEX_VIDEO_COL_KEY = 0;
+    public static final int INDEX_VIDEO_COL_NAME = 1;
+
+    public static final int INDEX_REVIEW_COL_AUTHOR = 0;
+    public static final int INDEX_REVIEW_COL_CONTENT = 1;
+    public static final int INDEX_REVIEW_COL_URL = 2;
+
+    private static final String MOVIE_ID = "movie";
+
+    private static final String[] MOVIE_COLUMNS = new String[]{
+            MovieEntry.COLUMN_ORIGINAL_TITLE,
+            MovieEntry.COLUMN_OVERVIEW,
+            MovieEntry.COLUMN_POSTER_PATH,
+            MovieEntry.COLUMN_RATING,
+            MovieEntry.COLUMN_RELEASE_DATE,
+            MovieEntry.COLUMN_RUNTIME,
+            MovieEntry.COLUMN_TITLE,
+            MovieEntry.COLUMN_FAVORITED,
+    };
+
+    private static final String[] VIDEO_COLUMNS = new String[]{
+            VideoEntry.COLUMN_KEY,
+            VideoEntry.COLUMN_NAME,
+            VideoEntry._ID
+    };
+
+    private static final String[] REVIEW_COLUMNS = new String[]{
+            ReviewEntry.COLUMN_AUTHOR,
+            ReviewEntry.COLUMN_CONTENT,
+            ReviewEntry.COLUMN_URL,
+            ReviewEntry._ID
+    };
+
+    private static final int MOVIE_LOADER_ID = 1;
+    private static final int VIDEO_LOADER_ID = 2;
+    private static final int REVIEW_LOADER_ID = 3;
+
+    private VideosCursorAdapter videosCursorAdapter;
+    private ReviewCursorAdapter reviewsAdapter;
     private RecyclerView recyclerViewVideos;
     private RecyclerView recyclerViewReviews;
     private TextView textViewReview;
     private TextView textViewTrailer;
     private View dividerReviews;
     private View dividerTrailers;
-    private MovieDto movieDto;
+    private ViewDataBinding dataBinding;
 
-    public static MovieDetailFragment newInstance(MovieDto movieDto) {
+    public static MovieDetailFragment newInstance(long movieId) {
         MovieDetailFragment fragment = new MovieDetailFragment();
         Bundle args = new Bundle();
-//        args.putParcelable(MOVIE_KEY, movieDto);
+        args.putLong(MOVIE_ID, movieId);
         fragment.setArguments(args);
         return fragment;
     }
@@ -60,20 +96,23 @@ public class MovieDetailFragment extends Fragment implements MovieDetailPresente
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        if (getArguments() == null || !getArguments().containsKey(MOVIE_KEY)) {
-//            throw new IllegalArgumentException("Start fragment with newInstance static method");
-//        } else {
-//            movieDto = getArguments().getParcelable(MOVIE_KEY);
-//            assert movieDto != null;
-//            presenter = new MovieDetailPresenter(movieDto.getId(), this);
-//            setRetainInstance(true);
-//        }
+        Bundle args = getArguments();
+        if (args == null || !args.containsKey(MOVIE_ID) || args.getLong(MOVIE_ID) == -1L) {
+            return;
+        }
+        if (savedInstanceState == null) {
+            MovieSyncAdapter.syncImmediatelyWithMovieId(getContext(), args.getLong(MOVIE_ID));
+        }
+        getLoaderManager().initLoader(MOVIE_LOADER_ID, args, new MovieLoader());
+        getLoaderManager().initLoader(VIDEO_LOADER_ID, args, new VideoLoader());
+        getLoaderManager().initLoader(REVIEW_LOADER_ID, args, new ReviewLoader());
+
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        ViewDataBinding dataBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_detail, container, false);
+        dataBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_detail, container, false);
         View rootView = dataBinding.getRoot();
         textViewReview = (TextView) rootView.findViewById(R.id.textViewReview);
         textViewTrailer = (TextView) rootView.findViewById(R.id.textViewTrailer);
@@ -85,74 +124,124 @@ public class MovieDetailFragment extends Fragment implements MovieDetailPresente
         recyclerViewVideos.setNestedScrollingEnabled(false);
         recyclerViewVideos.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerViewReviews.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        if (savedInstanceState == null) {
-            trailersAdaper = new TrailersAdaper(this);
-            recyclerViewVideos.setAdapter(trailersAdaper);
-            reviewsAdapter = new ReviewsAdapter(this);
-            recyclerViewReviews.setAdapter(reviewsAdapter);
-            viewModel = new MovieDetailViewModel(movieDto);
-            presenter.init();
-        } else {
-            viewModel = savedInstanceState.getParcelable(MOVIE_VM_KEY);
-            trailersAdaper = new TrailersAdaper(viewModel.getVideos(), this);
-            recyclerViewVideos.setAdapter(trailersAdaper);
-            reviewsAdapter = new ReviewsAdapter(viewModel.getReviews(), this);
-            recyclerViewReviews.setAdapter(reviewsAdapter);
-        }
-        dataBinding.setVariable(BR.movie, viewModel);
+        videosCursorAdapter = new VideosCursorAdapter(null, this);
+        recyclerViewVideos.setAdapter(videosCursorAdapter);
+        reviewsAdapter = new ReviewCursorAdapter(null, this);
+        recyclerViewReviews.setAdapter(reviewsAdapter);
         return rootView;
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putParcelable(MOVIE_VM_KEY, viewModel);
-        super.onSaveInstanceState(outState);
-    }
+//    @Override
+//    public void onSaveInstanceState(Bundle outState) {
+//        outState.putParcelable(MOVIE_VM_KEY, viewModel);
+//        super.onSaveInstanceState(outState);
+//    }
 
     @Override
-    public void onMovieDetailsLoaded(MovieDetailsDto movieDetailsDto) {
-        if (!movieDetailsDto.getTitle().equals(movieDetailsDto.getOriginalTitle())) {
-            viewModel.setOriginalTitle(movieDetailsDto.getOriginalTitle());
-        }
-        viewModel.setRuntime(movieDetailsDto.getRuntime());
-    }
-
-    @Override
-    public void onVideosLoaded(List<VideoDto> results) {
-        if (!results.isEmpty()) {
-            dividerTrailers.setVisibility(View.VISIBLE);
-            textViewTrailer.setVisibility(View.VISIBLE);
-            recyclerViewVideos.setVisibility(View.VISIBLE);
-            viewModel.addVideos(results);
-            for (VideoDto videoDto : viewModel.getVideos()) {
-                trailersAdaper.add(videoDto);
-            }
-        }
-    }
-
-    @Override
-    public void onReviewsLoaded(List<ReviewDto> results) {
-        if (!results.isEmpty()) {
-            dividerReviews.setVisibility(View.VISIBLE);
-            textViewReview.setVisibility(View.VISIBLE);
-            recyclerViewReviews.setVisibility(View.VISIBLE);
-            viewModel.addReviews(results);
-            for (ReviewDto reviewDto : viewModel.getReviews()) {
-                reviewsAdapter.add(reviewDto);
-            }
-        }
-    }
-
-    @Override
-    public void onVideoClick(VideoDto videoDto) {
-        if (videoDto.getSite().equals(getString(R.string.you_tube))) {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(String.format("http://www.youtube.com/watch?v=%s", videoDto.getKey()))));
-        }
+    public void onVideoClick(String key) {
+        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(String.format("http://www.youtube.com/watch?v=%s", key))));
     }
 
     @Override
     public void onReviewClick(String url) {
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+    }
+
+    private class MovieLoader implements LoaderManager.LoaderCallbacks<Cursor> {
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            long movieId = args.getLong(MOVIE_ID);
+            return new CursorLoader(
+                    getContext(),
+                    MovieEntry.buildMovieUri(movieId),
+                    MOVIE_COLUMNS,
+                    null,
+                    null,
+                    null);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+            if (cursor.moveToFirst()) {
+                Calendar c = Calendar.getInstance();
+                c.setTime(new Date(cursor.getLong(4)));
+                int i = c.get(Calendar.YEAR);
+                String year = String.valueOf(i);
+                MovieDetailViewModel viewModel = new MovieDetailViewModel(
+                        cursor.getString(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getFloat(3),
+                        year,
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getInt(7) == 1);
+
+                dataBinding.setVariable(com.moviedatabase.BR.movie, viewModel);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+
+        }
+    }
+
+    private class VideoLoader implements LoaderManager.LoaderCallbacks<Cursor> {
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            long movieId = args.getLong(MOVIE_ID);
+            return new CursorLoader(
+                    getContext(),
+                    VideoEntry.CONTENT_URI,
+                    VIDEO_COLUMNS,
+                    VideoEntry.COLUMN_MOVIE_ID + " =? AND " + VideoEntry.COLUMN_SITE + " =?",
+                    new String[]{String.valueOf(movieId), getString(R.string.you_tube)},
+                    null);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+            videosCursorAdapter.swapCursor(cursor);
+            if (cursor.moveToFirst()) {
+                dividerTrailers.setVisibility(View.VISIBLE);
+                textViewTrailer.setVisibility(View.VISIBLE);
+                recyclerViewVideos.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            videosCursorAdapter.swapCursor(null);
+        }
+    }
+
+    private class ReviewLoader implements LoaderManager.LoaderCallbacks<Cursor> {
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+            long movieId = args.getLong(MOVIE_ID);
+            return new CursorLoader(
+                    getContext(),
+                    ReviewEntry.CONTENT_URI,
+                    REVIEW_COLUMNS,
+                    ReviewEntry.COLUMN_MOVIE_ID + " =?",
+                    new String[]{String.valueOf(movieId)},
+                    null);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+            reviewsAdapter.swapCursor(cursor);
+            if (cursor.moveToFirst()) {
+                dividerReviews.setVisibility(View.VISIBLE);
+                textViewReview.setVisibility(View.VISIBLE);
+                recyclerViewReviews.setVisibility(View.VISIBLE);
+            }
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+            reviewsAdapter.swapCursor(null);
+        }
     }
 }

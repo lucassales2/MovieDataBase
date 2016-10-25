@@ -1,14 +1,19 @@
 package com.moviedatabase;
 
-import android.net.Uri;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
 import com.moviedatabase.sync.MovieSyncAdapter;
 
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+
 public class MainActivity extends AppCompatActivity implements MovieListFragment.Callback {
 
+    private static final String DETAILFRAGMENT_TAG = "DFTAG";
     private boolean mTwoPane;
 
     @Override
@@ -39,7 +44,23 @@ public class MainActivity extends AppCompatActivity implements MovieListFragment
     }
 
     @Override
-    public void onItemSelected(Uri dateUri) {
-
+    public void onItemSelected(long movieId) {
+        Observable.just(movieId)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<Long>() {
+                    @Override
+                    public void call(Long id) {
+                        if (mTwoPane) {
+                            getSupportFragmentManager()
+                                    .beginTransaction()
+                                    .replace(R.id.movie_detail_container, MovieDetailFragment.newInstance(id), DETAILFRAGMENT_TAG)
+                                    .commit();
+                        } else {
+                            Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
+                            intent.putExtra(MovieDetailActivity.MOVIE_ID, id);
+                            startActivity(intent);
+                        }
+                    }
+                });
     }
 }
