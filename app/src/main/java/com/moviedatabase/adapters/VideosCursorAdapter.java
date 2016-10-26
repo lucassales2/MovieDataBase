@@ -21,22 +21,29 @@ import java.lang.ref.WeakReference;
 
 public class VideosCursorAdapter extends CursorRecyclerViewAdapter<VideosCursorAdapter.ViewHolder> {
 
-    private WeakReference<VideosAdapterListener> listener;
+    private WeakReference<VideosCursorAdapterListener> listener;
 
-    public VideosCursorAdapter(Cursor cursor, VideosAdapterListener videosAdapterListener) {
+    public VideosCursorAdapter(Cursor cursor, VideosCursorAdapterListener videosCursorAdapterListener) {
         super(cursor);
-        listener = new WeakReference<>(videosAdapterListener);
+        listener = new WeakReference<>(videosCursorAdapterListener);
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, Cursor cursor) {
-        holder.textView.setText(cursor.getString(MovieDetailFragment.INDEX_VIDEO_COL_NAME));
+        final String name = cursor.getString(MovieDetailFragment.INDEX_VIDEO_COL_NAME);
         final String key = cursor.getString(MovieDetailFragment.INDEX_VIDEO_COL_KEY);
+        holder.textView.setText(name);
         Glide.with(holder.itemView.getContext()).load(String.format("http://img.youtube.com/vi/%s/mqdefault.jpg", key)).into(holder.imageView);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 listener.get().onVideoClick(key);
+            }
+        });
+        holder.imageViewShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                listener.get().onShareClick(key, name);
             }
         });
     }
@@ -49,11 +56,13 @@ public class VideosCursorAdapter extends CursorRecyclerViewAdapter<VideosCursorA
     class ViewHolder extends RecyclerView.ViewHolder {
         final TextView textView;
         final ImageView imageView;
+        final ImageView imageViewShare;
 
         private ViewHolder(View itemView) {
             super(itemView);
             textView = (TextView) itemView.findViewById(R.id.textViewTrailer);
             imageView = (ImageView) itemView.findViewById(R.id.imageViewTrailer);
+            imageViewShare = (ImageView) itemView.findViewById(R.id.imageViewShare);
         }
     }
 }
