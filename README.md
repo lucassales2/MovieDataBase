@@ -12,3 +12,4 @@ Libraries used
 Launcher icon from [Freepik](http://www.freepik.com/)
 
 Source for [CursorRecyclerViewAdapter](https://gist.github.com/skyfishjy/443b7448f59be978bc59)
+Source for [Icons](https://material.io/icons/)
