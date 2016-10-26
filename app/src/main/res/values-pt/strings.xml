@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="top_rated">Bem Avaliados</string>
+    <string name="popular">Popular</string>
+    <string name="now_playing">Nos cinemas</string>
+    <string name="upcoming">Em Breve</string>
+    <string name="share_a_link">Compartilhar \"%s\"</string>
+    <string name="favorites">Favoritos</string>
+</resources>
