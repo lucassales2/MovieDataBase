@@ -44,7 +44,6 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     private MoviesCursorAdapter cursorAdapter;
     private Callback callback;
     private int LOADER_ID = 0;
-    private GridLayoutManager gridLayoutManager;
     private boolean twoPane;
 
     @Override
@@ -70,12 +69,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        getLoaderManager().initLoader(LOADER_ID, createLoaderArguments(), this);
         RecyclerView recyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_main, container, false);
         recyclerView.setHasFixedSize(true);
         String title = sharedPreferences.getString(getString(R.string.movie_option), getString(R.string.top_rated));
         getActivity().setTitle(title);
-        gridLayoutManager = new GridLayoutManager(getContext(), 2);
-        recyclerView.setLayoutManager(gridLayoutManager);
+        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), getResources().getInteger(R.integer.span_count)));
         cursorAdapter = new MoviesCursorAdapter(null, this);
         recyclerView.setAdapter(cursorAdapter);
         return recyclerView;
@@ -121,6 +120,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             case R.id.action_top_rated:
                 edit.putString(getString(R.string.movie_option), getString(R.string.top_rated)).apply();
                 break;
+            case R.id.action_favorites:
+                edit.putString(getString(R.string.movie_option), getString(R.string.favorites)).apply();
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -143,10 +145,12 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
         cursorAdapter.swapCursor(cursor);
-        if (twoPane && cursor.moveToPosition(lastSelected)) {
-            callback.onItemSelected(cursor.getLong(0));
+        if (twoPane) {
+            if (cursor.moveToPosition(lastSelected)) {
+                callback.onItemSelected(cursor.getLong(0));
+            }
+            loader.stopLoading();
         }
-
     }
 
     @Override
@@ -184,6 +188,9 @@ public class MovieListFragment extends Fragment implements LoaderManager.LoaderC
             bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + " DESC");
             bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + "<= ?");
             bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(System.currentTimeMillis())});
+        } else if (movieOption.equals(getString(R.string.favorites))) {
+            bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_FAVORITED + "= ?");
+            bundle.putStringArray(SELECTION_ARGS, new String[]{String.valueOf(1)});
         } else {
             bundle.putString(SORT_ORDER, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + " ASC");
             bundle.putString(SELECTION, MovieContract.MovieEntry.COLUMN_RELEASE_DATE + ">= ?");

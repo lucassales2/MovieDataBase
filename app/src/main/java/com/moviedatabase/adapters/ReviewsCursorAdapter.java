@@ -17,12 +17,12 @@ import java.lang.ref.WeakReference;
  * Created by lucas on 24/10/16.
  */
 
-public class ReviewCursorAdapter extends CursorRecyclerViewAdapter<ReviewCursorAdapter.ViewHolder> {
-    private WeakReference<ReviewsAdapterListener> listener;
+public class ReviewsCursorAdapter extends CursorRecyclerViewAdapter<ReviewsCursorAdapter.ViewHolder> {
+    private WeakReference<ReviewsCursorAdapterListener> listener;
 
-    public ReviewCursorAdapter(Cursor cursor, ReviewsAdapterListener reviewsAdapterListener) {
+    public ReviewsCursorAdapter(Cursor cursor, ReviewsCursorAdapterListener reviewsCursorAdapterListener) {
         super(cursor);
-        listener = new WeakReference<>(reviewsAdapterListener);
+        listener = new WeakReference<>(reviewsCursorAdapterListener);
     }
 
     @Override
