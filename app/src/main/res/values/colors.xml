@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-***REMOVED***
+<resources>
     <color name="colorPrimary">#212121</color>
     <color name="colorPrimaryDark">@android:color/black</color>
     <color name="colorAccent">#FFD700</color>
     <color name="mint">#009688</color>
     <color name="grey">#757575</color>
-***REMOVED***
+</resources>

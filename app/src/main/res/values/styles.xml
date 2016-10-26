@@ -1,4 +1,4 @@
-***REMOVED***
+<resources>
 
     <style name="AppTheme.Main.Toolbar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -12,4 +12,4 @@
         <item name="actionMenuTextColor">@android:color/white</item>
     </style>
 
-***REMOVED***
+</resources>
